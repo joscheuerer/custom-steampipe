@@ -1,3 +1,38 @@
+control "timeout_and_memory_check" {
+    title       = "Timeout for a lambda should be up to 120 secound and the memory up to 64 Gb"
+    description = "Timeout for a lambda should be up to 120 secound and the memory up to 64 Gb"
+    query       = query.timeout_and_memory_checking
+  }
+
+query "timeout_and_memory_checking" {
+  sql = <<-EOQ
+select
+  arn as resource,
+  timeout,
+  memory_size,
+case
+  when (timeout > '120' AND memory_size > '64') then 'alarm'
+  else 'ok'
+  end as status,
+case
+    when (timeout > '120' AND memory_size > '64') then 'timeout too long.'
+    else 'timeout and memory ok'
+  end as reason
+from
+  aws.aws_lambda_function;
+  EOQ
+  }
+
+
+
+
+
+
+
+
+
+
+
 control "wafv2_web_acl_logging_enabled" {
     title       = "Logging should be enabled on AWS WAFv2 regional and global web access control list (ACLs)"
     description = "To help with logging and monitoring within your environment, enable AWS WAF (V2) logging on regional and global web ACLs."
@@ -87,7 +122,8 @@ control "wafv2_web_acl_logging_enabled" {
     description = "WAF deployed on public facing ALB"
     children = [
       control.wafv2_web_acl_resource_attached,
-      control.wafv2_web_acl_logging_enabled
+      control.wafv2_web_acl_logging_enabled,
+      control.timeout_and_memory_check
 
     ] 
  }
